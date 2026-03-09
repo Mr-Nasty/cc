@@ -1,102 +1,263 @@
-Create a VPC:
+STEP 1: Create a VPC
 
+Login to AWS Console.
 
-Action: Create a VPC named my-first-vpc with an IPv4 CIDR block of 10.0.0.0/16.
+Go to VPC Dashboard.
 
-Explanation: A VPC (Virtual Private Cloud) is your own isolated, private section of the AWS cloud. The 10.0.0.0/16 CIDR block gives you a massive pool of 65,536 private IP addresses to work with.
+Click "Create VPC".
 
-Create a Public and Private Subnet:
+Select "VPC only".
 
+Enter the following details:
+Name: MyVPC
+IPv4 CIDR block: 10.0.0.0/16
 
-Action: Create my-public-subnet-1 (10.0.1.0/24) and my-private-subnet-1 (10.0.0.0/24).
+Click Create VPC.
 
-Explanation: You are dividing your large VPC network into two smaller, distinct neighborhoods. One will face the public internet, and the other will remain completely hidden.
+STEP 2: Create Public Subnet
 
-Phase 2: Gateways & Routing (Controlling the Traffic Flow)
-Create an Internet Gateway (IGW) and attach it:
+Go to Subnets.
 
+Click Create Subnet.
 
-Action: Create my-igw and attach it to your VPC.
+Select the VPC you created.
 
-Explanation: By default, your VPC is a closed box. The IGW acts as the main door to the outside internet.
+Enter:
+Subnet Name: PublicSubnet
+CIDR Block: 10.0.1.0/24
 
-Create a NAT Gateway:
+Click Create Subnet.
 
+STEP 3: Create Private Subnet
 
-Action: Create a NAT Gateway and attach it to your Public Subnet.
+Click Create Subnet again.
 
-Explanation: Your private servers still need to download updates from the internet, but they shouldn't let the internet initiate connections to them. A NAT (Network Address Translation) Gateway sits in the public subnet, acts as a middleman, fetches the updates, and passes them back to the private subnet securely.
+Select the same VPC.
 
-Create and Configure Route Tables:
+Enter:
+Subnet Name: PrivateSubnet
+CIDR Block: 10.0.2.0/24
 
+Click Create Subnet.
 
-Action: Create my-public-rt and my-private-rt.
+STEP 4: Create Route Tables
 
+Public Route Table
 
-Action: Edit my-public-rt routes to send 0.0.0.0/0 (all internet traffic) to the Internet Gateway.
+Go to Route Tables.
 
+Click Create Route Table.
 
-Action: Edit my-private-rt routes to send 0.0.0.0/0 to the NAT Gateway.
+Name: PublicRT
 
+Select your VPC.
 
-Action: Associate the Public Subnet with my-public-rt and the Private Subnet with my-private-rt.
+Click Create.
 
-Explanation: Route tables are the traffic cops. You are explicitly telling the public subnet to use the main door (IGW) and the private subnet to use the secure middleman (NAT).
+Private Route Table
 
-Phase 3: Security & Identity (Locking it Down)
-Create Security Groups (Virtual Firewalls):
+Create another Route Table.
 
+Name: PrivateRT
 
-Action: Create public-sg and edit its inbound rules to allow SSH (Port 22) only from your local computer's IP.
+Select the same VPC.
 
+Click Create.
 
-Action: Create private-sg and edit its inbound rules to allow SSH.
+STEP 5: Associate Subnets with Route Tables
 
-Explanation: You are ensuring that only your specific Wi-Fi connection can access the public server, preventing random hackers from trying to guess your password.
+Public Route Table
 
-Create a Key Pair & IAM Role:
+Select PublicRT.
 
+Go to Subnet Associations.
 
-Action: Create an RSA Key Pair named vpc-kp.pem.
+Click Edit Associations.
 
+Select PublicSubnet.
 
-Action: Create an IAM Role named s3-full-access with the AmazonS3FullAccess policy for EC2.
+Private Route Table
 
-Explanation: The key pair is your digital password file. The IAM role gives your EC2 instances permission to securely talk to AWS S3 storage without you having to hardcode passwords into them.
+Select PrivateRT.
 
-Phase 4: Launching the Compute Instances (EC2)
-Launch the Public EC2 (The Bastion Host):
+Edit Subnet Associations.
 
+Select PrivateSubnet.
 
-Action: Launch an Ubuntu t2.micro instance named EC2-public-ubuntu in the Public Subnet.
+STEP 6: Create Internet Gateway
 
+Go to Internet Gateways.
 
-Action: Attach the vpc-kp key pair, the public-sg security group, and the s3-full-access IAM role. Enable Auto-assign public IP.
+Click Create Internet Gateway.
 
-Launch the Private EC2 (The Secure Server):
+Name: MyIGW.
 
+Click Create.
 
-Action: Launch another Ubuntu t2.micro instance named EC2-private-ubuntu in the Private Subnet.
+Attach Internet Gateway to VPC
 
+Select the Internet Gateway.
 
-Action: Attach the vpc-kp key pair, the private-sg security group, and the s3-full-access IAM role.
+Click Attach to VPC.
 
-Phase 5: The "Jump" (Testing the Connection)
-Fix Key Permissions (Windows Only):
+Choose your VPC.
 
+STEP 7: Create NAT Gateway
 
-Action: Open Command Prompt and run the icacls vpc-kp.pem /inheritance:r and icacls vpc-kp.pem /grant user-20:r commands.
+Go to NAT Gateways.
 
-Explanation: AWS will reject your SSH connection if your .pem file is readable by other users on your Windows machine. This locks the file down.
+Click Create NAT Gateway.
 
-Connect to the Public Instance:
+Select PublicSubnet.
 
+Allocate Elastic IP.
 
-Action: SSH into it using ssh -i "vpc-kp.pem" ubuntu@<Public-IP>.
+Click Create NAT Gateway.
 
-Transfer the Key and Jump to the Private Instance:
+STEP 8: Update Public Route Table
 
-Action: You cannot SSH into the private instance from your laptop because it has no public IP. You must copy your key pair to the public server using the Secure Copy Protocol: scp -i "vpc-kp.pem" "vpc-kp.pem" ubuntu@<Public-IP>:/home/ubuntu.
+Open PublicRT.
 
+Go to Routes.
 
-Action: From inside the public instance's terminal, use that copied key to SSH into the private instance using its Private IP (e.g., ssh -i "vpc-kp.pem" ubuntu@10.0.0.32)
+Click Edit Routes.
+
+Add Route:
+
+Destination: 0.0.0.0/0
+Target: Internet Gateway
+
+Save changes.
+
+STEP 9: Update Private Route Table
+
+Open PrivateRT.
+
+Go to Routes.
+
+Click Edit Routes.
+
+Add Route:
+
+Destination: 0.0.0.0/0
+Target: NAT Gateway
+
+Save changes.
+
+STEP 10: Create Security Groups
+
+Public Security Group
+
+Go to Security Groups.
+
+Click Create Security Group.
+
+Name: PublicSG.
+
+Add Inbound Rule:
+
+Type: SSH
+Source: My IP
+
+Save.
+
+Private Security Group
+
+Create another Security Group.
+
+Name: PrivateSG.
+
+Add Inbound Rule:
+
+Type: SSH
+Source: Public Instance
+
+STEP 11: Create Key Pair
+
+Go to EC2 Dashboard.
+
+Click Key Pairs.
+
+Click Create Key Pair.
+
+Name: vpc-kp.
+
+Download the .pem file.
+
+STEP 12: Create IAM Role
+
+Go to IAM Dashboard.
+
+Click Roles.
+
+Click Create Role.
+
+Select EC2 as trusted entity.
+
+Attach required permissions.
+
+Create the role.
+
+STEP 13: Launch Public EC2 Instance
+
+Go to EC2 → Launch Instance.
+
+Name: Public-Instance.
+
+Choose Ubuntu AMI.
+
+Instance Type: t2.micro.
+
+Select Key Pair: vpc-kp.
+
+Network Settings:
+VPC: MyVPC
+Subnet: PublicSubnet
+
+Enable Auto Assign Public IP.
+
+Select Security Group: PublicSG.
+
+Launch Instance.
+
+STEP 14: Launch Private EC2 Instance
+
+Launch another EC2 instance.
+
+Name: Private-Instance.
+
+VPC: MyVPC.
+
+Subnet: PrivateSubnet.
+
+Disable Public IP.
+
+Select Security Group: PrivateSG.
+
+Launch Instance.
+
+STEP 15: Connect to Public EC2 Instance (SSH)
+
+Open Command Prompt and run:
+
+icacls vpc-kp.pem /inheritance:r
+
+icacls vpc-kp.pem /grant user-20:r
+
+Then connect using SSH:
+
+ssh -i "vpc-kp.pem" ubuntu@PUBLIC-IP
+
+Example:
+
+ssh -i "vpc-kp.pem" ubuntu@13.126.101.78
+
+STEP 16: Copy File Using SCP
+
+To transfer file from local system to EC2 instance:
+
+scp -i "vpc-kp.pem" vpc-kp.pem ubuntu@PUBLIC-IP:/home/ubuntu
+
+Example:
+
+scp -i "C:\Users\user-20\Desktop\Sahil TY-IT\CC\vpc-kp.pem" "vpc-kp.pem" ubuntu@13.126.101.78:/home/ubuntu
