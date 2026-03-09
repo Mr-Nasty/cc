@@ -42,26 +42,26 @@ nano install_nginx.yml
 
 Add the following YAML code inside the file:
 
-name: Install and Start NGINX
-hosts: localhost
-become: yes
+- name: Install and Start NGINX
+  hosts: localhost
+  become: yes
 
-tasks:
+  tasks:
+    - name: Install NGINX
+      apt:
+        name: nginx
+        state: present
 
-name: Install NGINX
-apt:
-name: nginx
-state: present
+    - name: Start Nginx service
+      service:
+        name: nginx
+        state: started
 
-name: Start Nginx Service
-service:
-name: nginx
-state: started
+    - name: Create a file
+      file: 
+        path: /home/kali/demo.txt
+        state: touch
 
-name: Create a File
-file:
-path: /home/kali/demo.txt
-state: touch
 
 Save the file and exit the editor.
 
