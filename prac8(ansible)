@@ -1,0 +1,108 @@
+STEP 1: Update and Upgrade the System
+
+Open the terminal and run the following command:
+
+sudo apt update && sudo apt upgrade -y
+
+Explanation:
+This command updates the package list and upgrades all installed packages to the latest version.
+
+STEP 2: Install Required Dependencies
+
+Run the following command:
+
+sudo apt install -y python3-pip python3-dev libffi-dev libssl-dev
+
+Explanation:
+These packages are required for Ansible to run properly. They provide Python tools and security libraries needed by Ansible.
+
+STEP 3: Install Ansible
+
+Run the following command:
+
+sudo apt install -y ansible
+
+Explanation:
+This installs the Ansible automation tool from the system repository.
+
+STEP 4: Verify Ansible Installation
+
+Run the command:
+
+ansible --version
+
+Explanation:
+This command displays the installed version of Ansible and confirms that the installation was successful.
+
+STEP 5: Create a YAML Playbook File
+
+Create a file using the following command:
+
+nano install_nginx.yml
+
+Add the following YAML code inside the file:
+
+name: Install and Start NGINX
+hosts: localhost
+become: yes
+
+tasks:
+
+name: Install NGINX
+apt:
+name: nginx
+state: present
+
+name: Start Nginx Service
+service:
+name: nginx
+state: started
+
+name: Create a File
+file:
+path: /home/kali/demo.txt
+state: touch
+
+Save the file and exit the editor.
+
+Explanation:
+This playbook performs three tasks:
+
+Installs the NGINX web server.
+
+Starts the NGINX service.
+
+Creates a file named demo.txt in the home directory.
+
+STEP 6: Run the YAML Playbook
+
+Run the playbook using the following command:
+
+ansible-playbook install_nginx.yml
+
+Explanation:
+This command executes the YAML playbook and performs all tasks defined inside it.
+
+STEP 7: Verify the File Creation
+
+Run the following command:
+
+ls -l ~/demo.txt
+
+Explanation:
+This command checks whether the file demo.txt has been created successfully.
+
+STEP 8: Remove the Default Index File
+
+Run the command:
+
+sudo rm /var/www/html/index.html
+
+Explanation:
+This removes the default NGINX web page so that a custom page can be served.
+
+STEP 9: Check the Web Server
+
+Open a browser and go to:
+
+http://localhost
