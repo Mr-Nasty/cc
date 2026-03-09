@@ -1,0 +1,9 @@
+node{
+    stage('DEV')
+    stage('QA'){
+        input 'IS QA DEPLOY?'
+    }
+    stage('DEPLOY TO PROD'){
+        bat 'xcopy C:\\Users\\user-20\\Documents\\jenkin-tomcat\\hehe.html C:\\apache-tomcat-11.0.18\\webapps\\ROOT /E /I /Y'
+    }
+}
