@@ -1,0 +1,102 @@
+Create a VPC:
+
+
+Action: Create a VPC named my-first-vpc with an IPv4 CIDR block of 10.0.0.0/16.
+
+Explanation: A VPC (Virtual Private Cloud) is your own isolated, private section of the AWS cloud. The 10.0.0.0/16 CIDR block gives you a massive pool of 65,536 private IP addresses to work with.
+
+Create a Public and Private Subnet:
+
+
+Action: Create my-public-subnet-1 (10.0.1.0/24) and my-private-subnet-1 (10.0.0.0/24).
+
+Explanation: You are dividing your large VPC network into two smaller, distinct neighborhoods. One will face the public internet, and the other will remain completely hidden.
+
+Phase 2: Gateways & Routing (Controlling the Traffic Flow)
+Create an Internet Gateway (IGW) and attach it:
+
+
+Action: Create my-igw and attach it to your VPC.
+
+Explanation: By default, your VPC is a closed box. The IGW acts as the main door to the outside internet.
+
+Create a NAT Gateway:
+
+
+Action: Create a NAT Gateway and attach it to your Public Subnet.
+
+Explanation: Your private servers still need to download updates from the internet, but they shouldn't let the internet initiate connections to them. A NAT (Network Address Translation) Gateway sits in the public subnet, acts as a middleman, fetches the updates, and passes them back to the private subnet securely.
+
+Create and Configure Route Tables:
+
+
+Action: Create my-public-rt and my-private-rt.
+
+
+Action: Edit my-public-rt routes to send 0.0.0.0/0 (all internet traffic) to the Internet Gateway.
+
+
+Action: Edit my-private-rt routes to send 0.0.0.0/0 to the NAT Gateway.
+
+
+Action: Associate the Public Subnet with my-public-rt and the Private Subnet with my-private-rt.
+
+Explanation: Route tables are the traffic cops. You are explicitly telling the public subnet to use the main door (IGW) and the private subnet to use the secure middleman (NAT).
+
+Phase 3: Security & Identity (Locking it Down)
+Create Security Groups (Virtual Firewalls):
+
+
+Action: Create public-sg and edit its inbound rules to allow SSH (Port 22) only from your local computer's IP.
+
+
+Action: Create private-sg and edit its inbound rules to allow SSH.
+
+Explanation: You are ensuring that only your specific Wi-Fi connection can access the public server, preventing random hackers from trying to guess your password.
+
+Create a Key Pair & IAM Role:
+
+
+Action: Create an RSA Key Pair named vpc-kp.pem.
+
+
+Action: Create an IAM Role named s3-full-access with the AmazonS3FullAccess policy for EC2.
+
+Explanation: The key pair is your digital password file. The IAM role gives your EC2 instances permission to securely talk to AWS S3 storage without you having to hardcode passwords into them.
+
+Phase 4: Launching the Compute Instances (EC2)
+Launch the Public EC2 (The Bastion Host):
+
+
+Action: Launch an Ubuntu t2.micro instance named EC2-public-ubuntu in the Public Subnet.
+
+
+Action: Attach the vpc-kp key pair, the public-sg security group, and the s3-full-access IAM role. Enable Auto-assign public IP.
+
+Launch the Private EC2 (The Secure Server):
+
+
+Action: Launch another Ubuntu t2.micro instance named EC2-private-ubuntu in the Private Subnet.
+
+
+Action: Attach the vpc-kp key pair, the private-sg security group, and the s3-full-access IAM role.
+
+Phase 5: The "Jump" (Testing the Connection)
+Fix Key Permissions (Windows Only):
+
+
+Action: Open Command Prompt and run the icacls vpc-kp.pem /inheritance:r and icacls vpc-kp.pem /grant user-20:r commands.
+
+Explanation: AWS will reject your SSH connection if your .pem file is readable by other users on your Windows machine. This locks the file down.
+
+Connect to the Public Instance:
+
+
+Action: SSH into it using ssh -i "vpc-kp.pem" ubuntu@<Public-IP>.
+
+Transfer the Key and Jump to the Private Instance:
+
+Action: You cannot SSH into the private instance from your laptop because it has no public IP. You must copy your key pair to the public server using the Secure Copy Protocol: scp -i "vpc-kp.pem" "vpc-kp.pem" ubuntu@<Public-IP>:/home/ubuntu.
+
+
+Action: From inside the public instance's terminal, use that copied key to SSH into the private instance using its Private IP (e.g., ssh -i "vpc-kp.pem" ubuntu@10.0.0.32)
