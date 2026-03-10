@@ -258,6 +258,6 @@ To transfer file from local system to EC2 instance:
 
 scp -i "vpc-kp.pem" vpc-kp.pem ubuntu@PUBLIC-IP:/home/ubuntu
 
-Example:
+chmod 400 vpc-kp.pem
 
-scp -i "C:\Users\user-20\Desktop\Sahil TY-IT\CC\vpc-kp.pem" "vpc-kp.pem" ubuntu@13.126.101.78:/home/ubuntu
+ssh -i vpc-kp.pem ubuntu@10.0.0.110 (Private IP)
